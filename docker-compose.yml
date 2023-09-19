@@ -1,0 +1,174 @@
+version: '3'
+services:
+  cockroach1:
+    image: cockroachdb/cockroach:latest
+    container_name: cockroach1
+    hostname: cockroach1
+    volumes:
+      - '$COCKROACH1_DATA_DIR:/cockroach/cockroach-data'
+      - '$COCKROACH1_CERTS_DIR:/certs'
+
+    ports:
+      - "26257:26257"
+      - "8880:8080"
+    command: "start --certs-dir=/certs --store=cockroach1 --advertise-addr=${COCKROACH1_HOST}:26257 --join=${COCKROACH1_HOST}:26257"
+
+  cockroach2:
+    image: cockroachdb/cockroach:latest
+    container_name: cockroach2
+    hostname: cockroach2
+    volumes:
+      - '$COCKROACH2_DATA_DIR:/cockroach/cockroach-data'
+      - '$COCKROACH2_CERTS_DIR:/certs'
+    ports:
+      - "26258:26257"
+      - "8881:8080"
+    command: "start --certs-dir=/certs --store=cockroach2 --advertise-addr=${COCKROACH2_HOST}:26258 --join=${COCKROACH1_HOST}:26257"
+
+  cockroach3:
+    image: cockroachdb/cockroach:latest
+    container_name: cockroach3
+    hostname: cockroach3
+    volumes:
+      - '$COCKROACH3_DATA_DIR:/cockroach/cockroach-data'
+      - '$COCKROACH3_CERTS_DIR:/certs'
+    ports:
+      - "26259:26257"
+      - "8882:8080"
+    command: "start --certs-dir=/certs --store=cockroach3 --advertise-addr=${COCKROACH3_HOST}:26259 --join=${COCKROACH1_HOST}:26257"
+
+  broker:
+
+    image: "bitnami/kafka:3.4.0"
+
+    hostname: broker
+
+    container_name: broker
+
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=kraft:PLAINTEXT,CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@broker:9094
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - BITNAMI_DEBUG=yes
+      - KAFKA_KRAFT_CLUSTER_ID=OTMwNzFhYTY1ODNiNGE5OT
+      - KAFKA_CFG_KRAFT_REPLICATION_FACTOR=1
+      - KAFKA_CFG_ADVERTISED_LISTENERS=kraft://:9093,INTERNAL://broker:9092
+      - KAFKA_CFG_LISTENERS=kraft://:9093,CONTROLLER://broker:9094,INTERNAL://:9092
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+      - KAFKA_CFG_DEFAULT_REPLICATION_FACTOR=1
+
+    volumes:
+      - '/Users/poamen/projects/pau/drp/assignments/stream-from-file/volumes/kafka_data:/tmp/bitnami/kafka/data/'
+
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+      - "9094:9094"
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    hostname: schema-registry
+    container_name: schema-registry
+
+    depends_on:
+      - broker
+
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'broker:9092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    volumes:
+      - ./data:/tmp/data
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect-base:latest
+    container_name: kafka-connect
+    hostname: connect
+    depends_on:
+      - schema-registry
+    ports:
+      - 8083:8083
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: "broker:9092"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _kafka-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: _kafka-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: _kafka-connect-status
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: 'http://schema-registry:8081'
+      CONNECT_LOG4J_ROOT_LOGLEVEL: "INFO"
+      CONNECT_LOG4J_LOGGERS: "org.apache.kafka.connect.runtime.rest=WARN,org.reflections=ERROR"
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_PLUGIN_PATH: '/usr/share/java,/usr/share/confluent-hub-components/,/connectors/'
+      # If you want to use the Confluent Hub installer to d/l component, but make them available
+      # when running this offline, spin up the stack once and then run : 
+      #   docker cp kafka-connect:/usr/share/confluent-hub-components ./connectors
+      #   mv ./connectors/confluent-hub-components/* ./connectors
+      #   rm -rf ./connectors/confluent-hub-components
+    volumes:
+      - /Users/poamen/projects/pau/drp/assignments/stream-from-file/connectors:/connectors
+      - /Users/poamen/projects/pau/drp/assignments/stream-from-file/cockroachdb1/certs:/certs
+      - /Users/poamen/projects/pau/drp/assignments/stream-from-file/logs:/logs-to-analyze
+    # In the command section, $ are replaced with $$ to avoid the error 'Invalid interpolation format for "command" option'
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Connector"
+        #confluent-hub install --no-prompt debezium/debezium-connector-mysql:2.2.1
+        confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:14.0.7
+        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.7.3
+        #confluent-hub install --no-prompt debezium/debezium-connector-sqlserver:2.2.1
+        #confluent-hub install --no-prompt confluentinc/kafka-connect-oracle-cdc:2.7.3
+        confluent-hub install --no-prompt neo4j/kafka-connect-neo4j:5.0.2
+        #
+        echo "Launching Kafka Connect worker"
+        /etc/confluent/docker/run &
+        #
+        sleep infinity
+
+  ksqldb-server:
+    image: confluentinc/cp-ksqldb-server:7.2.6
+    hostname: ksqldb-server
+    container_name: ksqldb-server
+
+    depends_on:
+      - schema-registry
+      - kafka-connect
+
+    ports:
+      - "8088:8088"
+    environment:
+      KSQL_LISTENERS: http://0.0.0.0:8088
+      KSQL_BOOTSTRAP_SERVERS: broker:9092
+      KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
+      KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_KSQL_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KSQL_KSQL_CONNECT_URL: http://connect:8083
+    volumes:
+      - /Users/poamen/projects/pau/drp/assignments/stream-from-file/cockroachdb1/certs:/certs
+
+  ksqldb-cli:
+    image: confluentinc/cp-ksqldb-cli:7.2.6
+    container_name: ksqldb-cli
+
+    depends_on:
+      - schema-registry
+      - kafka-connect
+      - ksqldb-server
+    entrypoint: /bin/sh
+    tty: true

@@ -1,0 +1,41 @@
+[2023-09-16 17:04:06,425] INFO [Broker id=1] Leader _kafka-connect-status-0 with topic id Some(beM65-CiSmWDN9mtPxxnBw) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [1], adding replicas [] and removing replicas []. Previous leader epoch was -1. (state.change.logger)
+
+[2023-09-16 17:04:06,427] INFO [DynamicConfigPublisher nodeType=broker id=1] Updating topic _kafka-connect-status with new configuration : cleanup.policy -> compact (kafka.server.metadata.DynamicConfigPublisher)
+
+[2023-09-16 17:04:06,441] INFO [Controller 1] CreateTopics result(s): CreatableTopic(name='_kafka-connect-configs', numPartitions=1, replicationFactor=1, assignments=[], configs=[CreateableTopicConfig(name='cleanup.policy', value='compact')]): SUCCESS (org.apache.kafka.controller.ReplicationControlManager)
+
+[2023-09-16 17:04:06,442] INFO [Controller 1] Created topic _kafka-connect-configs with topic ID i39EG4UsRUq-jBYobFExow. (org.apache.kafka.controller.ReplicationControlManager)
+
+[2023-09-16 17:04:06,442] INFO [Controller 1] ConfigResource(type=TOPIC, name='_kafka-connect-configs'): set configuration cleanup.policy to compact (org.apache.kafka.controller.ConfigurationControlManager)
+
+[2023-09-16 17:04:06,442] INFO [Controller 1] Created partition _kafka-connect-configs-0 with topic ID i39EG4UsRUq-jBYobFExow and PartitionRegistration(replicas=[1], isr=[1], removingReplicas=[], addingReplicas=[], leader=1, leaderRecoveryState=RECOVERED, leaderEpoch=0, partitionEpoch=0). (org.apache.kafka.controller.ReplicationControlManager)
+
+[2023-09-16 17:04:06,468] INFO [Broker id=1] Transitioning 1 partition(s) to local leaders. (state.change.logger)
+
+[2023-09-16 17:04:06,471] INFO [ReplicaFetcherManager on broker 1] Removed fetcher for partitions Set(_kafka-connect-configs-0) (kafka.server.ReplicaFetcherManager)
+
+[2023-09-16 17:04:06,472] INFO [Broker id=1] Creating new partition _kafka-connect-configs-0 with topic id i39EG4UsRUq-jBYobFExow. (state.change.logger)
+
+[2023-09-16 17:04:06,477] INFO [LogLoader partition=_kafka-connect-configs-0, dir=/bitnami/kafka/data] Loading producer state till offset 0 with message format version 2 (kafka.log.UnifiedLog$)
+
+[2023-09-16 17:04:06,478] INFO Created log for partition _kafka-connect-configs-0 in /bitnami/kafka/data/_kafka-connect-configs-0 with properties {cleanup.policy=compact} (kafka.log.LogManager)
+
+[2023-09-16 17:04:06,483] INFO [Partition _kafka-connect-configs-0 broker=1] No checkpointed highwatermark is found for partition _kafka-connect-configs-0 (kafka.cluster.Partition)
+
+[2023-09-16 17:04:06,484] INFO [Partition _kafka-connect-configs-0 broker=1] Log loaded for partition _kafka-connect-configs-0 with initial high watermark 0 (kafka.cluster.Partition)
+
+[2023-09-16 17:04:06,484] INFO [Broker id=1] Leader _kafka-connect-configs-0 with topic id Some(i39EG4UsRUq-jBYobFExow) starts at leader epoch 0 from offset 0 with partition epoch 0, high watermark 0, ISR [1], adding replicas [] and removing replicas []. Previous leader epoch was -1. (state.change.logger)
+
+[2023-09-16 17:04:06,487] INFO [DynamicConfigPublisher nodeType=broker id=1] Updating topic _kafka-connect-configs with new configuration : cleanup.policy -> compact (kafka.server.metadata.DynamicConfigPublisher)
+
+[2023-09-16 17:04:06,552] INFO [GroupCoordinator 1]: Dynamic member with unknown member id joins group kafka-connect in Empty state. Created a new member id connect-1-4a1cd9c4-1e14-4bc5-bc03-8212ef1c0409 and request the member to rejoin with this id. (kafka.coordinator.group.GroupCoordinator)
+
+[2023-09-16 17:04:06,555] INFO [GroupCoordinator 1]: Preparing to rebalance group kafka-connect in state PreparingRebalance with old generation 0 (__consumer_offsets-11) (reason: Adding new member connect-1-4a1cd9c4-1e14-4bc5-bc03-8212ef1c0409 with group instance id None; client reason: rebalance failed due to MemberIdRequiredException) (kafka.coordinator.group.GroupCoordinator)
+
+[2023-09-16 17:04:09,556] INFO [GroupCoordinator 1]: Stabilized group kafka-connect generation 1 (__consumer_offsets-11) with 1 members (kafka.coordinator.group.GroupCoordinator)
+
+[2023-09-16 17:04:09,571] INFO [GroupCoordinator 1]: Assignment received from leader connect-1-4a1cd9c4-1e14-4bc5-bc03-8212ef1c0409 for group kafka-connect for generation 1. The group has 1 members, 0 of which are static. (kafka.coordinator.group.GroupCoordinator)
+
+[2023-09-16 17:13:54,878] INFO [TransactionCoordinator id=1] Node 1 disconnected. (org.apache.kafka.clients.NetworkClient)
+
+[2023-09-16 17:14:06,780] INFO [BrokerToControllerChannelManager broker=1 name=forwarding] Node 1 disconnected. (org.apache.kafka.clients.NetworkClient)
